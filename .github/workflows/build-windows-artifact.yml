@@ -29,10 +29,12 @@ jobs:
   build:
     runs-on: windows-2022
     env:
-      # The committed ugoira staticlib is an MSVC import library. GitHub's
-      # windows runner ships MinGW gcc ahead of MSVC on PATH and cgo would pick
-      # it, so the link fails on __chkstk and RTTI symbols. Force MSVC.
-      CC: cl
+      # The committed ugoira staticlib is an MSVC import library, so the link
+      # must go through an MSVC-ABI toolchain. Two things go wrong otherwise:
+      # the runner ships MinGW gcc ahead of MSVC on PATH and cgo picks it, and
+      # plain cl rejects the gcc-style /Werror that cgo passes. The upstream
+      # ci/platforms.json uses clang -fuse-ld=lld for Windows; mirror that.
+      CC: clang -fuse-ld=lld
       CGO_ENABLED: "1"
     steps:
       - uses: actions/checkout@v4
