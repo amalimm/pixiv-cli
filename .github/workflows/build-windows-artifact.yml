@@ -28,6 +28,12 @@ permissions:
 jobs:
   build:
     runs-on: windows-2022
+    env:
+      # The committed ugoira staticlib is an MSVC import library. GitHub's
+      # windows runner ships MinGW gcc ahead of MSVC on PATH and cgo would pick
+      # it, so the link fails on __chkstk and RTTI symbols. Force MSVC.
+      CC: cl
+      CGO_ENABLED: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,7 +46,7 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          $env:CGO_ENABLED = "1"
+          go env CC
           go build -trimpath -buildvcs=false -o pixiv.exe ./cmd/pixiv
           .\pixiv.exe --version
 
