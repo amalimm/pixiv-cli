@@ -47,9 +47,15 @@ jobs:
 
       - name: Build
         shell: pwsh
+        env:
+          # Matches scripts/build-platform.sh. Without it the binary reports
+          # "pixiv dev" and the install is indistinguishable from a stray build.
+          PIXIV_FORK_VERSION: 1.1.1+pixiv-fork.1
         run: |
           go env CC
-          go build -trimpath -buildvcs=false -o pixiv.exe ./cmd/pixiv
+          go build -trimpath -buildvcs=false `
+            -ldflags "-X github.com/FlanChanXwO/pixiv-cli/internal/shared/buildinfo.Version=$env:PIXIV_FORK_VERSION" `
+            -o pixiv.exe ./cmd/pixiv
           .\pixiv.exe --version
 
       - uses: actions/upload-artifact@v4
