@@ -1,0 +1,51 @@
+# Fork-local build helper. Not part of the upstream contribution in
+# fix/mcp-input-schema-required-null.
+#
+# Builds a Windows amd64 binary from this fork so the input-schema fix can be
+# exercised before upstream ships a release carrying it. The committed Rust
+# ugoira staticlib is linked directly (see
+# internal/media/ugoira/rust_link_windows_amd64.go), so no Rust toolchain is
+# needed here.
+#
+# Delete this file once an official pixiv-cli release includes the fix and the
+# MCP registration points back at FlanChanXwO/pixiv-cli.
+name: Build Windows artifact (fork-local)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-windows-artifact.yml'
+      - 'cmd/**'
+      - 'internal/**'
+      - 'sdk/**'
+      - 'go.mod'
+      - 'go.sum'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $env:CGO_ENABLED = "1"
+          go build -trimpath -buildvcs=false -o pixiv.exe ./cmd/pixiv
+          .\pixiv.exe --version
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pixiv-windows-amd64
+          path: pixiv.exe
+          if-no-files-found: error
